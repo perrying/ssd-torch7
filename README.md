@@ -24,9 +24,9 @@ To train
 th main.lua
 ```
 
-example of output
-
+# example of output
 ![test1](https://github.com/perrying/ssd-torch7/blob/image/test.png)
+![test4](https://github.com/perrying/ssd-torch7/blob/image/test4.png)
 ![test2](https://github.com/perrying/ssd-torch7/blob/image/test2.png)
 ![test3](https://github.com/perrying/ssd-torch7/blob/image/test3.png)
-![test4](https://github.com/perrying/ssd-torch7/blob/image/test4.png)
+
