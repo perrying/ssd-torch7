@@ -3,7 +3,7 @@ This is an experimental Torch7 implementation of SSD.
 This code is not implemented normalization and data augmentation. (I used 1x1 convolution instead of normalization)
 
 # Requirements
-[Torch7](http://torch.ch/docs/getting-started.html), [caffe](http://caffe.berkeleyvision.org/) and
+[Torch7](http://torch.ch/docs/getting-started.html), [caffe](http://caffe.berkeleyvision.org/), [cuda](https://developer.nvidia.com/cuda-downloads), [cudnn](https://developer.nvidia.com/cudnn) and
 
 ```Shell
 luarocks install loadcaffe
