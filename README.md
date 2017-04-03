@@ -23,3 +23,6 @@ To train
 ```Shell
 th main.lua
 ```
+
+example of output
+![test1](https://github.com/perrying/ssd-torch7/blob/image/test.png)
