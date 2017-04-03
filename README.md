@@ -1,4 +1,4 @@
-# SSD : Single Shot Multi-Box Detector for Torch7
+# SSD : Single Shot MultiBox Detector for Torch7
 This is an experimental Torch7 implementation of SSD.
 This code is not implemented normalization and data augmentation. (I used 1x1 convolution instead of normalization)
 
