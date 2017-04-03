@@ -46,10 +46,10 @@ function DecodeBBox(bbox, prior_bboxes, variance)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}] * variance[3]), prior_width)
     decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_height)
   end
-  local xmin = torch.csub(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
-  local ymin = torch.csub(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
-  local xmax = torch.add(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
-  local ymax = torch.add(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
+  local xmin = torch.cmax(torch.csub(decode_bbox_center_x, decode_bbox_width/2), 0):view(-1, 1)
+  local ymin = torch.cmax(torch.csub(decode_bbox_center_y, decode_bbox_height/2), 0):view(-1, 1)
+  local xmax = torch.cmin(torch.add(decode_bbox_center_x, decode_bbox_width/2), 1):view(-1, 1)
+  local ymax = torch.cmin(torch.add(decode_bbox_center_y, decode_bbox_height/2), 1):view(-1, 1)
   return torch.cat(torch.cat(xmin, ymin, 2), torch.cat(xmax, ymax, 2), 2)
 end
 
