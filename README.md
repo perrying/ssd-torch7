@@ -25,13 +25,9 @@ To train
 th main.lua
 ```
 
-If you don't have time to train your model, you can download a pre-trained model
+If you don't have time to train your model, you can download a pre-trained model at [here](https://drive.google.com/open?id=0B-54K0G9NZpud0RjSnppWVJJRWc)
 
-```Shell
-wget https://drive.google.com/open?id=0B-54K0G9NZpud0RjSnppWVJJRWc
-```
-
-and detection
+and detection (you need to change model and image path)
 
 ```Shell
 th test.lua
