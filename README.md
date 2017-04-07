@@ -25,7 +25,11 @@ To train
 th main.lua
 ```
 
-If you don't have time to train your model, you can download a pre-trained model at [here](https://drive.google.com/open?id=0B-54K0G9NZpud0RjSnppWVJJRWc)
+If you don't have time to train your model, you can download a pre-trained model
+
+```Shell
+wget https://www.dropbox.com/s/vj8xf3wwzko9ouq/model120000iteration.t7
+```
 
 and detection (you need to change model and image path)
 
