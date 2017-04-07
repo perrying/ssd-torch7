@@ -117,12 +117,6 @@ end
 function EncodeLocPrediction(loc_preds, prior_bboxes, gt_locs, match_indices, cfg)
   local loc_gt_data = EncodeBBox(gt_locs:index(1, match_indices:nonzero():view(-1)), prior_bboxes:index(1, match_indices:nonzero():view(-1)), cfg.variance)
   local loc_pred_data = loc_preds:index(1, match_indices:nonzero():view(-1))
-  -- if cfg.variance ~= nil then
-  --   loc_pred_data[{{}, {1}}]:div(cfg.variance[1])
-  --   loc_pred_data[{{}, {2}}]:div(cfg.variance[2])
-  --   loc_pred_data[{{}, {3}}]:div(cfg.variance[3])
-  --   loc_pred_data[{{}, {4}}]:div(cfg.variance[4])
-  -- end
   return loc_gt_data, loc_pred_data
 end
 

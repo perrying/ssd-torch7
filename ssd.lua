@@ -98,12 +98,6 @@ local function crateModel(classes, conf, pretrain)
   :add(nn.Transpose({2,3},{3,4}))
   :add(nn.Reshape(-1, classes))))
   -- conv4 box and conf
-  -- local normalize_conv = cudnn.SpatialConvolution(512, 512, 1, 1)
-  -- for i=1, normalize_conv.weight:size(1) do
-  --   for j=1, normalize_conv.weight:size(2) do
-  --
-  --   end
-  -- end
   normalize_conv = cudnn.SpatialConvolution(512, 512, 1, 1)
   normalize_conv.weight:fill(0.001)
   if cudnn.version >= 4000 then

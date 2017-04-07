@@ -82,15 +82,3 @@ function loadPascal(root, cache_path, class2num, conf)
   return trainGT, testGT, trainPath, testPath
 end
 
--- function loadMotChallenge(root, cache_path)
---   if paths.filep(paths.concat(cache_path, 'TrainPath.t7')) and paths.filep(paths.concat(cache_path, 'TrainLabel.t7')) then
---     trainPath = torch.load(paths.concat(cache_path, 'TrainPath.t7'))
---     trainGT = torch.load(paths.concat(cache_path, 'TrainLabel.t7'))
---   end
---   local dataset_name = {}
---   for i in paths.iterfiles(paths.concat(root, 'train')) do
---     table.insert(dataset_name, i)
---   end
---   local img_name = {}
---   for i = 1, #dataset_name do
--- end
