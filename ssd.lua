@@ -13,7 +13,7 @@ local function crateModel(classes, conf, pretrain)
       conv = cudnn.SpatialConvolution(ic, oc, kw, kh, sw, sh, pw, ph):init('weight', nninit.xavier, {dist='uniform', gain=1.1})
     elseif type == 'D' then
       local karnel = torch.randn(oc, ic, kw, kh)
-      conv = nn.SpatialDilatedConvolution(ic, oc, kw, kh, sw, sh, pw, ph, dw, dh)
+      conv = nn.SpatialDilatedConvolution(ic, oc, kw, kh, sw, sh, pw, ph, pw, ph)
       nninit.xavier(nn.SpatialConvolution(ic, oc, kw, kh, sw, sh, pw, ph), karnel, {dist='uniform', gain=1.1})
       conv.weight:copy(karnel)
     end
@@ -59,12 +59,12 @@ local function crateModel(classes, conf, pretrain)
     main:add(xconv(512, 512, 3, 3, 1, 1, 1, 1, 'N', 0, 0, true))
     -- conv5 (module 24 ~ 31)
     branch2:add(cudnn.SpatialMaxPooling(2, 2, 2, 2)) -- 38 -> 19
-    branch2:add(xconv(512, 512, 3, 3, 1, 1, 1, 1, 'D', 1, 1, true))
-    branch2:add(xconv(512, 512, 3, 3, 1, 1, 1, 1, 'D', 1, 1, true))
-    branch2:add(xconv(512, 512, 3, 3, 1, 1, 1, 1, 'D', 1, 1, true))
+    branch2:add(xconv(512, 512, 3, 3, 1, 1, 6, 6, 'D', 6, 6, true))
+    branch2:add(xconv(512, 512, 3, 3, 1, 1, 6, 6, 'D', 6, 6, true))
+    branch2:add(xconv(512, 512, 3, 3, 1, 1, 6, 6, 'D', 6, 6, true))
     branch2:add(cudnn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
     -- fc6 (module 32, 33)
-    branch2:add(xconv(512, 1024, 3, 3, 1, 1, 1, 1, 'D', 1, 1))
+    branch2:add(xconv(512, 1024, 3, 3, 1, 1, 6, 6, 'D', 6, 6))
     -- fc7 (module 34, 35)
     branch2:add(xconv(1024, 1024, 1, 1, 1, 1, 0, 0, 'N', 0, 0, true))
   end
@@ -97,6 +97,13 @@ local function crateModel(classes, conf, pretrain)
   :add(nn.Sequential():add(xconv(256, classes*conf.bpc[6], 3, 3, 1, 1, 1, 1, 'N', 0, 0, false))
   :add(nn.Transpose({2,3},{3,4}))
   :add(nn.Reshape(-1, classes))))
+  -- conv4 box and conf
+  -- local normalize_conv = cudnn.SpatialConvolution(512, 512, 1, 1)
+  -- for i=1, normalize_conv.weight:size(1) do
+  --   for j=1, normalize_conv.weight:size(2) do
+  --
+  --   end
+  -- end
   normalize_conv = cudnn.SpatialConvolution(512, 512, 1, 1)
   normalize_conv.weight:fill(0.001)
   if cudnn.version >= 4000 then

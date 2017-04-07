@@ -46,10 +46,10 @@ function DecodeBBox(bbox, prior_bboxes, variance)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}] * variance[3]), prior_width)
     decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_height)
   end
-  local xmin = torch.cmax(torch.csub(decode_bbox_center_x, decode_bbox_width/2), 0):view(-1, 1)
-  local ymin = torch.cmax(torch.csub(decode_bbox_center_y, decode_bbox_height/2), 0):view(-1, 1)
-  local xmax = torch.cmin(torch.add(decode_bbox_center_x, decode_bbox_width/2), 1):view(-1, 1)
-  local ymax = torch.cmin(torch.add(decode_bbox_center_y, decode_bbox_height/2), 1):view(-1, 1)
+  local xmin = torch.csub(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
+  local ymin = torch.csub(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
+  local xmax = torch.add(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
+  local ymax = torch.add(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
   return torch.cat(torch.cat(xmin, ymin, 2), torch.cat(xmax, ymax, 2), 2)
 end
 
@@ -117,6 +117,12 @@ end
 function EncodeLocPrediction(loc_preds, prior_bboxes, gt_locs, match_indices, cfg)
   local loc_gt_data = EncodeBBox(gt_locs:index(1, match_indices:nonzero():view(-1)), prior_bboxes:index(1, match_indices:nonzero():view(-1)), cfg.variance)
   local loc_pred_data = loc_preds:index(1, match_indices:nonzero():view(-1))
+  -- if cfg.variance ~= nil then
+  --   loc_pred_data[{{}, {1}}]:div(cfg.variance[1])
+  --   loc_pred_data[{{}, {2}}]:div(cfg.variance[2])
+  --   loc_pred_data[{{}, {3}}]:div(cfg.variance[3])
+  --   loc_pred_data[{{}, {4}}]:div(cfg.variance[4])
+  -- end
   return loc_gt_data, loc_pred_data
 end
 
@@ -289,7 +295,7 @@ end
 function DrawRect(img, box, cls, index2class)
   for i = 1, box:size(1) do
     img = image.drawRect(img, box[i][1], box[i][2], box[i][3], box[i][4])
-    img = image.drawText(img, index2class[cls[i]], box[i][1], box[i][2], {color={255,255,255}, bg={0,0,255}, size=5})
+    img = image.drawText(img, index2class[cls[i]], box[i][1], box[i][2], {color={255,255,255}, bg={0,0,255}, size=1})
   end
   return img
 end
