@@ -12,6 +12,7 @@ luarocks install optnet
 ```
 
 # Usage
+
 download PascalVOC and caffemodel, and convert data
 
 ```Shell
@@ -22,6 +23,18 @@ To train
 
 ```Shell
 th main.lua
+```
+
+If you don't have time to train your model, you can download a pre-trained model
+
+```Shell
+wget https://drive.google.com/open?id=0B-54K0G9NZpud0RjSnppWVJJRWc
+```
+
+and detection
+
+```Shell
+th test.lua
 ```
 
 # example of output
