@@ -81,4 +81,3 @@ function loadPascal(root, cache_path, class2num, conf)
   end
   return trainGT, testGT, trainPath, testPath
 end
-

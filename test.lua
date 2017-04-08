@@ -1,27 +1,29 @@
-_=dofile('ssd.lua')
-dofile('cfg.lua')
-dofile('utils.lua')
-require 'image';
-model=torch.load('output/model120000iter.t7')
-path =torch.load('cache/paths2007Test.t7')
-class_list = {'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
-              'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
-             'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'}
-torch.setdefaulttensortype('torch.FloatTensor')
-img = image.load('data/VOCdevkit/VOC'..path[1][1]..'/JPEGImages/'..path[1][2]..'.jpg')
-img_r = img[{{1},{},{}}]
-img_b = img[{{3},{},{}}]
-img[{{1},{},{}}] = img_b
-img[{{3},{},{}}] = img_r
-img = image.scale(img,300,300)
-box,cls,score=Detect(model,img,0.45,0.6,cfg)
-img = image.load('data/VOCdevkit/VOC'..path[1][1]..'/JPEGImages/'..path[1][2]..'.jpg')
-box = box[1]
-for i = 1, box:size(1) do
-  box[i][1] = box[i][1]*img:size(3)
-  box[i][2] = box[i][2]*img:size(2)
-  box[i][3] = box[i][3]*img:size(3)
-  box[i][4] = box[i][4]*img:size(2)
+function test()
+  model:evaluate()
+  for i = 1, #testpath, opt.batchsize do
+    local inputs = torch.Tensor(math.min(opt.batchsize, #testpath-i), 3, cfg.imgshape, cfg.imgshape)
+    local gt_labels = {}
+    local gt_bboxes = {}
+    for j = 1, math.min(opt.batchsize, #testpath-i) do
+      local img = image.load(paths.concat(opt.root, 'VOC'..trainpath[i][1], 'JPEGImages', trainpath[i][2]..'.jpg'))
+      img = image.scale(img, cfg.imgshape, cfg.imgshape):reshape(1, 3, cfg.imgshape, cfg.imgshape)
+      -- channel RGB to BGR
+      local tmp_r = img[{{},{1},{},{}}]
+      local tmp_b = img[{{},{3},{},{}}]
+      img[{{},{1},{},{}}] = tmp_b
+      img[{{},{3},{},{}}] = tmp_r
+      inputs[j] = img
+      local info = testgt[testpath[i][2]]
+      local label = info:narrow(2,1,1)
+      local box = info:narrow(2,2,4):reshape(info:size(1),4)
+      table.insert(gt_bboxes, box)
+      table.insert(gt_labels, label)
+    end
+    local outputs = model:forward(inputs:cuda())
+    local loc_preds = outputs[1]
+    local conf_preds = outputs[2]
+    local bboxes, classes, score = Detect(loc_preds, conf_preds, cfg.nms_threshold, cfg.iou_threshold)
+    local pred, gt = Evaluate(bboxes, classes, gt_bboxes, gt_labels)
+  end
+  print(conf_mat)
 end
-img = DrawRect(img,box,cls[1],class_list)
-image.savePNG('test4.png',img)

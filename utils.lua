@@ -1,4 +1,5 @@
 require 'nn';
+require 'cunn';
 
 loc_loss_func = nn.SmoothL1Criterion():cuda()
 loc_loss_func.sizeAverage = false
@@ -39,12 +40,12 @@ function DecodeBBox(bbox, prior_bboxes, variance)
     decode_bbox_center_x = torch.add(torch.cmul(bbox[{{}, {1}}], prior_width), prior_center_x)
     decode_bbox_center_y = torch.add(torch.cmul(bbox[{{}, {2}}], prior_height), prior_center_y)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}]), prior_width)
-    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}]), prior_height)
+    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}]), prior_width)
   else
     decode_bbox_center_x = torch.add(torch.cmul(bbox[{{}, {1}}], prior_width) * variance[1], prior_center_x)
     decode_bbox_center_y = torch.add(torch.cmul(bbox[{{}, {2}}], prior_height) * variance[2], prior_center_y)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}] * variance[3]), prior_width)
-    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_height)
+    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_width)
   end
   local xmin = torch.csub(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
   local ymin = torch.csub(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
@@ -105,8 +106,8 @@ function CalcPriorBBoxParam(cfg)
   local max_ratio = cfg.s_max or 90
   local layer_num = cfg.nmap or 6
   local step = math.floor((max_ratio - min_ratio) / (layer_num - 2))
-  local min_sizes = {min_dim * 4 / 100.} -- first layer's scale
-  local max_sizes = {min_dim * 10 / 100.}
+  local min_sizes = {min_dim * 10 / 100.} -- first layer's scale
+  local max_sizes = {min_dim * 20 / 100.}
   for ratio = min_ratio, max_ratio, step do
     table.insert(min_sizes, min_dim * ratio / 100)
     table.insert(max_sizes, min_dim * (ratio + step) / 100)
@@ -137,8 +138,8 @@ function BBoxSize(bbox)
   local idx = torch.cmul(bbox[{{}, {3}}]:gt(bbox[{{}, {1}}]), bbox[{{}, {4}}]:gt(bbox[{{}, {2}}])):view(-1)
   local width = torch.csub(bbox[{{}, {3}}][idx], bbox[{{}, {1}}][idx])
   local height = torch.csub(bbox[{{}, {4}}][idx], bbox[{{}, {2}}][idx])
-  sizes[idx] = torch.cmul(width, height):float()
-  return sizes
+  sizes[idx] = torch.cmul(width, height)
+  return sizes:float()
 end
 
 function JaccardOverlap(bbox, gtbbox)
@@ -219,7 +220,7 @@ function MultiBoxLoss(loc_preds, conf_preds, gt_bboxes, gt_labels, cfg)
   local match_indices, gt_locs = MatchingBBoxes(prior_bboxes, gt_bboxes, gt_labels, cfg)
   local neg_indices = MineHardExamples(conf_preds:float(), match_indices:float())
   local loc_gt_data, loc_pred_data = EncodeLocPrediction(loc_preds:float(), prior_bboxes, gt_locs, match_indices, cfg)
-  local conf_gt_data, conf_pred_data = EncodeConfPrediction(conf_preds:float(), match_indices, neg_indices)
+  local conf_gt_data, conf_pred_data = EncodeConfPrediction(conf_preds:float(), match_indices, neg_indices, prior_bboxes:size(), cfg)
   return GetGradient(loc_gt_data, loc_pred_data, conf_gt_data, conf_pred_data, match_indices, neg_indices, prior_bboxes:size(), cfg)
 end
 
@@ -292,34 +293,4 @@ function DrawRect(img, box, cls, index2class)
     img = image.drawText(img, index2class[cls[i]], box[i][1], box[i][2], {color={255,255,255}, bg={0,0,255}, size=1})
   end
   return img
-end
-
-function Evaluate(loc_preds, cls_preds, gt_bboxes, gt_labels, threshold)
-  local all_match_bboxes = {}
-  local all_match_labels = {}
-  for i = 1, #preds_data do
-    local match_bboxes = {}
-    local match_labels = {}
-    for j = 1, gt_labels:size(1) do
-      local cls_idx = cls_preds:eq(gt_labels[j])
-      local bboxes = loc_preds[cls_idx]
-      local overlaps = JaccardOverlap(bboxes, gt_bboxes[j]:view(1, -1))
-      local v, match_idx = overlaps:max()
-      if v:view(-1)[1] >= threshold then
-        bbox = bboxes:index(1, match_idx:view(-1))
-        cls = cls_preds[cls_idx]:index(1, match_idx:view(-1))
-      else
-        bbox = torch.zeros(1,4)
-        cls = torch.ones(1)
-      end
-      table.insert(match_bboxes, bbox)
-      table.insert(match_labels, cls)
-    end
-    if conf_mat ~= nil then
-      conf_mat:batchAdd(torch.cat(cls, 1):view(-1), gt_labels[i])
-    end
-    table.insert(all_match_bboxes, torch.cat(match_bboxes, 1))
-    table.insert(all_match_labels, torch.cat(match_labels, 1))
-  end
-  return all_match_bboxes, all_match_labels
 end
