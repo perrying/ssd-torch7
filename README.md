@@ -28,7 +28,7 @@ th main.lua
 If you don't have time to train your model, you can download a pre-trained model
 
 ```Shell
-wget https://www.dropbox.com/s/vj8xf3wwzko9ouq/model120000iteration.t7
+wget https://www.dropbox.com/s/r9b2t8oxab8a3d8/model120000iteration.t7
 ```
 
 and detection (you need to change model and image path)
