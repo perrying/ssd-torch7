@@ -34,7 +34,7 @@ wget https://www.dropbox.com/s/r9b2t8oxab8a3d8/model120000iteration.t7
 and detection (you need to change model and image path)
 
 ```Shell
-th test.lua
+th demo.lua
 ```
 
 # example of output
