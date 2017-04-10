@@ -5,7 +5,7 @@ dofile('cfg.lua')
 dofile('utils.lua')
 require 'image'
 
-model = torch.load(model_path)
+model = torch.load(model_path):cuda()
 img = image.load(img_path)
 res = img.clone()
 
