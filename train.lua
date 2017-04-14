@@ -4,7 +4,7 @@ function train()
   local mean_loss = 0
   local mean_loc_loss = 0
   local mean_conf_loss = 0
-  local imgs = {}
+  local imgs = torch.FloatTensor(opt.batchsize, 3, cfg.imgshape, cfg.imgshape)
   local gt_bboxes = {}
   local gt_labels = {}
   local shuffle = torch.randperm(#trainpath)
@@ -21,13 +21,12 @@ function train()
     local info = traingt[trainpath[shuffle[index]][2]]
     local label = info:narrow(2,1,1)
     local box = info:narrow(2,2,4):reshape(info:size(1),4)
-    table.insert(imgs, img)
+    imgs[(index-1) % opt.batchsize + 1] = img
     table.insert(gt_bboxes, box)
     table.insert(gt_labels, label)
     -- batch forward and backward
     if index % opt.batchsize == 0 then
       gparam:zero()
-      imgs = torch.cat(imgs, 1)
       local outputs = model:forward(imgs:cuda())
       local loc_preds = outputs[1]
       local conf_preds = outputs[2]
@@ -57,7 +56,6 @@ function train()
       local function feval() return loss, gparam end
       -- parameter update
       optim.sgd(feval, param, opt_conf)
-      imgs = {}
       gt_bboxes = {}
       gt_labels = {}
       collectgarbage()

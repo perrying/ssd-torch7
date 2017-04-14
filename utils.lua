@@ -1,5 +1,4 @@
 require 'nn';
-require 'cunn';
 
 loc_loss_func = nn.SmoothL1Criterion():cuda()
 loc_loss_func.sizeAverage = false
@@ -40,12 +39,12 @@ function DecodeBBox(bbox, prior_bboxes, variance)
     decode_bbox_center_x = torch.add(torch.cmul(bbox[{{}, {1}}], prior_width), prior_center_x)
     decode_bbox_center_y = torch.add(torch.cmul(bbox[{{}, {2}}], prior_height), prior_center_y)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}]), prior_width)
-    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}]), prior_width)
+    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}]), prior_height)
   else
     decode_bbox_center_x = torch.add(torch.cmul(bbox[{{}, {1}}], prior_width) * variance[1], prior_center_x)
     decode_bbox_center_y = torch.add(torch.cmul(bbox[{{}, {2}}], prior_height) * variance[2], prior_center_y)
     decode_bbox_width = torch.cmul(torch.exp(bbox[{{}, {3}}] * variance[3]), prior_width)
-    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_width)
+    decode_bbox_height = torch.cmul(torch.exp(bbox[{{}, {4}}] * variance[4]), prior_height)
   end
   local xmin = torch.csub(decode_bbox_center_x, decode_bbox_width/2):view(-1, 1)
   local ymin = torch.csub(decode_bbox_center_y, decode_bbox_height/2):view(-1, 1)
@@ -118,6 +117,12 @@ end
 function EncodeLocPrediction(loc_preds, prior_bboxes, gt_locs, match_indices, cfg)
   local loc_gt_data = EncodeBBox(gt_locs:index(1, match_indices:nonzero():view(-1)), prior_bboxes:index(1, match_indices:nonzero():view(-1)), cfg.variance)
   local loc_pred_data = loc_preds:index(1, match_indices:nonzero():view(-1))
+  -- if cfg.variance ~= nil then
+  --   loc_pred_data[{{}, {1}}]:div(cfg.variance[1])
+  --   loc_pred_data[{{}, {2}}]:div(cfg.variance[2])
+  --   loc_pred_data[{{}, {3}}]:div(cfg.variance[3])
+  --   loc_pred_data[{{}, {4}}]:div(cfg.variance[4])
+  -- end
   return loc_gt_data, loc_pred_data
 end
 
@@ -138,8 +143,8 @@ function BBoxSize(bbox)
   local idx = torch.cmul(bbox[{{}, {3}}]:gt(bbox[{{}, {1}}]), bbox[{{}, {4}}]:gt(bbox[{{}, {2}}])):view(-1)
   local width = torch.csub(bbox[{{}, {3}}][idx], bbox[{{}, {1}}][idx])
   local height = torch.csub(bbox[{{}, {4}}][idx], bbox[{{}, {2}}][idx])
-  sizes[idx] = torch.cmul(width, height)
-  return sizes:float()
+  sizes[idx] = torch.cmul(width, height):float()
+  return sizes
 end
 
 function JaccardOverlap(bbox, gtbbox)
@@ -220,7 +225,7 @@ function MultiBoxLoss(loc_preds, conf_preds, gt_bboxes, gt_labels, cfg)
   local match_indices, gt_locs = MatchingBBoxes(prior_bboxes, gt_bboxes, gt_labels, cfg)
   local neg_indices = MineHardExamples(conf_preds:float(), match_indices:float())
   local loc_gt_data, loc_pred_data = EncodeLocPrediction(loc_preds:float(), prior_bboxes, gt_locs, match_indices, cfg)
-  local conf_gt_data, conf_pred_data = EncodeConfPrediction(conf_preds:float(), match_indices, neg_indices, prior_bboxes:size(), cfg)
+  local conf_gt_data, conf_pred_data = EncodeConfPrediction(conf_preds:float(), match_indices, neg_indices)
   return GetGradient(loc_gt_data, loc_pred_data, conf_gt_data, conf_pred_data, match_indices, neg_indices, prior_bboxes:size(), cfg)
 end
 

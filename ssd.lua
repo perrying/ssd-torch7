@@ -106,7 +106,6 @@ local function crateModel(classes, conf, pretrain)
   else
     normalize_conv.bias:zero()
   end
-  -- subbranch1:add(nn.Reshape(-1)):add(nn.Normalize(2)):add(nn.MulConstant(20)):add(nn.Reshape(512, 38, 38))
   subbranch1:add(normalize_conv)
   subbranch1:add(nn.ConcatTable()
   :add(nn.Sequential():add(xconv(512, 4*conf.bpc[1], 3, 3, 1, 1, 1, 1, 'N', 0, 0, false))
