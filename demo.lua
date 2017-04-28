@@ -7,7 +7,7 @@ require 'image'
 
 model = torch.load(model_path):cuda()
 img = image.load(img_path)
-res = img.clone()
+res = img:clone()
 img = image.scale(img, 300, 300)
 
 class_list = {'__background__', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
@@ -24,6 +24,7 @@ for i = 1, boxes[1]:size(1) do
   boxes[1][i][2] = boxes[1][i][2] * res:size(2)
   boxes[1][i][3] = boxes[1][i][3] * res:size(3)
   boxes[1][i][4] = boxes[1][i][4] * res:size(2)
+end
 res = DrawRect(res, boxes[1], classes[1], class_list)
 
 image.savePNG('res.png', res)
