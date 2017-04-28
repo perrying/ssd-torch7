@@ -10,7 +10,7 @@ img = image.load(img_path)
 res = img:clone()
 img = image.scale(img, 300, 300)
 
-class_list = {'__background__', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
+class_list = {'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
               'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
              'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'}
 
