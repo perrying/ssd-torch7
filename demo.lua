@@ -1,5 +1,6 @@
 model_path = 'model120000iteration.t7'
 img_path ='path/to/image'
+torch.setdefaulttensortype('torch.FloatTensor')
 _=dofile('ssd.llua')
 dofile('cfg.lua')
 dofile('utils.lua')
