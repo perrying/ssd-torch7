@@ -13,7 +13,7 @@ local function crateModel(classes, conf, pretrain)
       conv = cudnn.SpatialConvolution(ic, oc, kw, kh, sw, sh, pw, ph):init('weight', nninit.xavier, {dist='uniform', gain=1.1})
     elseif type == 'D' then
       local karnel = torch.randn(oc, ic, kw, kh)
-      conv = nn.SpatialDilatedConvolution(ic, oc, kw, kh, sw, sh, pw, ph, pw, ph)
+      conv = nn.SpatialDilatedConvolution(ic, oc, kw, kh, sw, sh, pw, ph, dw, dh)
       nninit.xavier(nn.SpatialConvolution(ic, oc, kw, kh, sw, sh, pw, ph), karnel, {dist='uniform', gain=1.1})
       conv.weight:copy(karnel)
     end
